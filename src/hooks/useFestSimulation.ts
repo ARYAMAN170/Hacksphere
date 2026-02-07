@@ -7,6 +7,7 @@ export const useFestSimulation = (): SimulationState => {
   const [serverCount, setServerCount] = useState<number>(2);
   const [weather, setWeather] = useState<WeatherState>('sunny');
   const [logs, setLogs] = useState<string[]>(["System connecting..."]);
+  const [accuracy, setAccuracy] = useState<number>(98.4);
   const wsRef = useRef<WebSocket | null>(null);
 
   const addLog = (msg: string) => setLogs(prev => [msg, ...prev].slice(0, 5));
@@ -45,6 +46,9 @@ export const useFestSimulation = (): SimulationState => {
 
             setTrafficHistory(prev => [...prev.slice(-20), newPoint]);
             setServerCount(serversRunning);
+
+            // Random "Pulsing" Accuracy between 92.00% and 97.00%
+            setAccuracy(92 + Math.random() * 5);
 
             // Dynamic Weather Logic
             if (currentRPS > 150) {
@@ -98,5 +102,5 @@ export const useFestSimulation = (): SimulationState => {
     }
   };
 
-  return { trafficHistory, serverCount, weather, logs, triggerSpike, reset };
+  return { trafficHistory, serverCount, weather, logs, accuracy, triggerSpike, reset };
 };

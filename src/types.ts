@@ -13,6 +13,7 @@ export interface SimulationState {
   serverCount: number;
   weather: WeatherState;
   logs: string[];
+  accuracy: number;
   triggerSpike: () => Promise<void>;
   reset: () => Promise<void>;
 }

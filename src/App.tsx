@@ -7,7 +7,7 @@ import { useFestSimulation } from './hooks/useFestSimulation';
 import { Terminal, Activity, DollarSign } from 'lucide-react';
 
 const App: React.FC = () => {
-  const { trafficHistory, serverCount, weather, logs, triggerSpike, reset } = useFestSimulation();
+  const { trafficHistory, serverCount, weather, logs, accuracy, triggerSpike, reset } = useFestSimulation();
   const [secretClicks, setSecretClicks] = useState(0);
 
   const handleSecretClick = () => {
@@ -62,7 +62,7 @@ const App: React.FC = () => {
               </div>
               <div className="bg-gray-900/40 backdrop-blur p-4 rounded-xl border border-white/10 shadow-2xl">
                  <div className="text-white/50 text-xs uppercase font-bold">Prediction Confidence</div>
-                 <div className="text-4xl font-mono text-green-400">98.4%</div>
+                 <div className="text-4xl font-mono text-green-400">{accuracy.toFixed(2)}%</div>
               </div>
            </div>
         </div>
