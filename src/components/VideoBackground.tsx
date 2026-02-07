@@ -1,5 +1,5 @@
 // src/components/VideoBackground.tsx
-import React from 'react';
+import React, { useEffect, useRef } from 'react';
 import type { WeatherState } from '../types';
 
 // Assets are now served from /public/videos for better static asset handling on Vercel
@@ -13,13 +13,59 @@ interface VideoBackgroundProps {
   weather: WeatherState;
 }
 
-const VideoBackground: React.FC<VideoBackgroundProps> = ({ weather }) => {
+const VideoBackground: React.FC<VideoBackgroundProps> = React.memo(({ weather }) => {
+  const sunnyRef = useRef<HTMLVideoElement>(null);
+  const cloudyRef = useRef<HTMLVideoElement>(null);
+  const stormRef = useRef<HTMLVideoElement>(null);
+
+  useEffect(() => {
+    // Helper to safely play
+    const playVideo = (ref: React.RefObject<HTMLVideoElement | null>) => {
+      if (ref.current && ref.current.paused) {
+        ref.current.play().catch(e => console.log("Playback prevented:", e));
+      }
+    };
+
+    // Helper to pause
+    const pauseVideo = (ref: React.RefObject<HTMLVideoElement | null>) => {
+      if (ref.current && !ref.current.paused) {
+        ref.current.pause();
+      }
+    };
+
+    // 1. Manage Sunny Video (Base)
+    // Always play unless fully covered by Storm (optimization)
+    // Actually, let's keep it playing in Cloudy too just in case of transparency,
+    // but definitely pause in Storm as it's 2 layers down.
+    if (weather === 'storm') {
+      pauseVideo(sunnyRef);
+    } else {
+      playVideo(sunnyRef);
+    }
+
+    // 2. Manage Cloudy Video
+    // Visible in Cloudy and Storm
+    if (weather === 'cloudy' || weather === 'storm') {
+      playVideo(cloudyRef);
+    } else {
+      pauseVideo(cloudyRef);
+    }
+
+    // 3. Manage Storm Video
+    // Visible only in Storm
+    if (weather === 'storm') {
+      playVideo(stormRef);
+    } else {
+      pauseVideo(stormRef);
+    }
+  }, [weather]);
   
   return (
     <div className="absolute inset-0 w-full h-full overflow-hidden bg-gray-900">
       {/* 1. SUNNY VIDEO LAYER - Base Layer, always visible */}
       <video
-        autoPlay muted loop playsInline preload="auto"
+        ref={sunnyRef}
+        muted loop playsInline preload="auto"
         className="absolute inset-0 w-full h-full object-cover z-0"
       >
         <source src={VIDEOS.sunny} type="video/mp4" />
@@ -27,7 +73,8 @@ const VideoBackground: React.FC<VideoBackgroundProps> = ({ weather }) => {
 
       {/* 2. CLOUDY VIDEO LAYER - Visible for cloudy AND storm */}
       <video
-        autoPlay muted loop playsInline preload="auto"
+        ref={cloudyRef}
+        muted loop playsInline preload="auto"
         className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-2000 ease-in-out z-10 ${
           weather === 'cloudy' || weather === 'storm' ? 'opacity-100' : 'opacity-0'
         }`}
@@ -36,11 +83,12 @@ const VideoBackground: React.FC<VideoBackgroundProps> = ({ weather }) => {
       </video>
 
       {/* 3. STORM VIDEO LAYER - Visible only for storm */}
-      <div className={`absolute inset-0 w-full h-full transition-opacity duration-[3000ms] ease-in-out z-20 ${
+      <div className={`absolute inset-0 w-full h-full transition-opacity duration-3000 ease-in-out z-20 ${
           weather === 'storm' ? 'opacity-100' : 'opacity-0'
       }`}>
         <video
-          autoPlay muted loop playsInline preload="auto"
+          ref={stormRef}
+          muted loop playsInline preload="auto"
           className="w-full h-full object-cover"
         >
           <source src={VIDEOS.storm} type="video/mp4" />
@@ -58,6 +106,6 @@ const VideoBackground: React.FC<VideoBackgroundProps> = ({ weather }) => {
       <div className="absolute inset-0 z-30 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-20"></div>
     </div>
   );
-};
+});
 
 export default VideoBackground;

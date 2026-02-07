@@ -6,69 +6,97 @@ export const useFestSimulation = (): SimulationState => {
   const [trafficHistory, setTrafficHistory] = useState<TrafficPoint[]>([]);
   const [serverCount, setServerCount] = useState<number>(2);
   const [weather, setWeather] = useState<WeatherState>('sunny');
-  const [logs, setLogs] = useState<string[]>(["System initialized..."]);
-  
-  // Future buffer for the "Yellow Line"
-  const [prediction, setPrediction] = useState<TrafficPoint[]>([]);
-
-  const timeRef = useRef<number>(0);
+  const [logs, setLogs] = useState<string[]>(["System connecting..."]);
+  const wsRef = useRef<WebSocket | null>(null);
 
   const addLog = (msg: string) => setLogs(prev => [msg, ...prev].slice(0, 5));
 
-  const triggerSpike = () => {
-    addLog("⚠️ USER: Manual Load Test Initiated");
-    
-    // 1. AI "Predicts" the spike (Cloudy)
-    setTimeout(() => {
-        setWeather('cloudy');
-        addLog("🤖 AI: High Traffic Vector Detected (+400%)");
-        
-        // Generate the "Yellow Dotted Line" data
-        const futureData: TrafficPoint[] = Array.from({length: 20}, (_, i) => ({
-            time: timeRef.current + i + 1,
-            traffic: 0, // Placeholder
-            predicted: 400 + Math.random() * 50
-        }));
-        setPrediction(futureData);
-    }, 1000);
-
-    // 2. The Storm Hits & Scaling Begins (Storm)
-    setTimeout(() => {
-        setWeather('storm');
-        addLog("⚡ SCALER: Provisioning 8 new containers...");
-        setServerCount(10); // AUTO SCALE
-    }, 3000);
-  };
-
-  const reset = () => {
-    setServerCount(2);
-    setWeather('sunny');
-    setPrediction([]);
-    addLog("✅ System Stabilized.");
-  };
-
+  // Connect to Backend
   useEffect(() => {
-    const interval = setInterval(() => {
-      timeRef.current += 1;
-      
-      // Calculate "Real" Traffic
-      let currentLoad = 30 + Math.random() * 10;
-      if (weather === 'storm') currentLoad = 400 + Math.random() * 50;
-      
-      const newPoint: TrafficPoint = {
-        time: new Date().toLocaleTimeString(),
-        traffic: currentLoad,
-        predicted: prediction.length > 0 ? prediction[0].predicted : null
-      };
+    const checkHealth = async () => {
+        try {
+            const res = await fetch('http://localhost:4000/');
+            if(res.ok) addLog("✅ Backend System Online");
+            else addLog("⚠️ Backend Initializing...");
+        } catch (e) {
+            addLog("❌ Backend Unreachable");
+        }
+    };
+    checkHealth();
 
-      // Shift prediction array if it exists
-      if(prediction.length > 0) setPrediction(prev => prev.slice(1));
+    // Setup WebSocket
+    const ws = new WebSocket("ws://localhost:4000");
+    wsRef.current = ws;
 
-      setTrafficHistory(prev => [...prev.slice(-20), newPoint]); 
-    }, 1000);
+    ws.onopen = () => {
+        addLog("🔌 Realtime Data Stream Connected");
+    };
 
-    return () => clearInterval(interval);
-  }, [weather, prediction]);
+    ws.onmessage = (event) => {
+        try {
+            const data = JSON.parse(event.data);
+            const { currentRPS, predictedRPS, serversRunning } = data;
+
+            const newPoint: TrafficPoint = {
+                time: new Date().toLocaleTimeString(),
+                traffic: currentRPS,
+                predicted: predictedRPS
+            };
+
+            setTrafficHistory(prev => [...prev.slice(-20), newPoint]);
+            setServerCount(serversRunning);
+
+            // Dynamic Weather Logic
+            if (currentRPS > 150) {
+                setWeather('storm');
+            } else if (predictedRPS > 150) {
+                setWeather('cloudy');
+            } else {
+                setWeather('sunny');
+            }
+
+        } catch (e) {
+            console.error("WS Parse Error", e);
+        }
+    };
+
+    ws.onerror = (e) => {
+        // console.error("WS Error", e);
+        // addLog("⚠️ Stream Error");
+    };
+
+    return () => {
+        ws.close();
+    };
+  }, []);
+
+  const triggerSpike = async () => {
+    addLog("⚠️ Sending Load Test Command...");
+    // Optimistic Update: Prevent double-click
+    setWeather('cloudy');
+    
+    try {
+        const res = await fetch('http://localhost:4000/simulate/flood/start', { method: 'POST' });
+        const data = await res.json();
+        addLog(`🚀 ${data.status}`);
+    } catch (e) {
+        addLog("❌ Start Failed");
+        setWeather('sunny'); // Revert if failed
+    }
+  };
+
+  const reset = async () => {
+    addLog("🛑 Sending Stop Command...");
+    
+    try {
+        const res = await fetch('http://localhost:4000/simulate/flood/stop', { method: 'POST' });
+        const data = await res.json();
+        addLog(`✅ ${data.status}`);
+        setWeather('sunny');
+    } catch (e) {
+        addLog("❌ Stop Failed");
+    }
+  };
 
   return { trafficHistory, serverCount, weather, logs, triggerSpike, reset };
 };

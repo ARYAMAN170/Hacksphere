@@ -30,21 +30,15 @@ const App: React.FC = () => {
           <p className="text-white/70 text-sm">Predictive Autoscaling System</p>
         </div>
         <div className="flex gap-4">
-           {weather === 'storm' && (
-               <button onClick={reset} className="bg-gray-800 hover:bg-gray-700 px-6 py-2 rounded-lg font-bold border border-white/20 transition-all">
-                 RESET DEMO
-               </button>
-           )}
            <button 
-             onClick={triggerSpike}
-             disabled={weather !== 'sunny'}
-             className={`px-6 py-2 rounded-lg font-bold shadow-lg transition-transform active:scale-95 ${
+             onClick={weather === 'sunny' ? triggerSpike : reset}
+             className={`px-6 py-2 rounded-lg font-bold shadow-lg transition-transform active:scale-95 text-white ${
                weather === 'sunny' 
-               ? 'bg-red-500 hover:bg-red-600 text-white' 
-               : 'bg-gray-500 cursor-not-allowed opacity-50'
+               ? 'bg-red-500 hover:bg-red-600' 
+               : 'bg-rose-600 hover:bg-rose-700'
              }`}
            >
-             {weather === 'sunny' ? '🔥 TRIGGER SPIKE' : 'SCALING IN PROGRESS...'}
+             {weather === 'sunny' ? '🔥 TRIGGER SPIKE' : '🛑 STOP SPIKE'}
            </button>
         </div>
       </header>
@@ -78,7 +72,7 @@ const App: React.FC = () => {
            <ServerGrid count={serverCount} />
            
            {/* Terminal Log */}
-           <div className="bg-black/80 backdrop-blur-xl rounded-xl p-4 border border-white/10 flex-1 font-mono text-xs overflow-hidden flex flex-col min-h-[200px] shadow-2xl">
+           <div className="bg-black/80 backdrop-blur-xl rounded-xl p-4 border border-white/10 flex-1 font-mono text-xs overflow-hidden flex flex-col min-h-50 shadow-2xl">
               <div className="flex items-center gap-2 text-gray-400 mb-2 border-b border-gray-700 pb-2">
                  <Terminal size={14} /> SYSTEM LOGS
               </div>
