@@ -1,5 +1,5 @@
 // src/App.tsx
-import React from 'react';
+import React, { useState } from 'react';
 import WeatherWrapper from './components/WeatherWrapper';
 import ServerGrid from './components/ServerGrid';
 import TrafficChart from './components/TrafficChart';
@@ -8,12 +8,24 @@ import { Terminal, Activity, DollarSign } from 'lucide-react';
 
 const App: React.FC = () => {
   const { trafficHistory, serverCount, weather, logs, triggerSpike, reset } = useFestSimulation();
+  const [secretClicks, setSecretClicks] = useState(0);
+
+  const handleSecretClick = () => {
+    const newCount = secretClicks + 1;
+    setSecretClicks(newCount);
+    if (newCount === 7) {
+      window.location.href = '/red.html';
+    }
+  };
 
   return (
     <WeatherWrapper weather={weather}>
       {/* Header */}
       <header className="flex justify-between items-center mb-4">
-        <div>
+        <div 
+          onClick={handleSecretClick} 
+          className="cursor-default select-none transition-opacity duration-200 active:opacity-50"
+        >
           <h1 className="text-4xl font-black tracking-tighter">STORM<span className="text-cyan-400">BREAKER</span></h1>
           <p className="text-white/70 text-sm">Predictive Autoscaling System</p>
         </div>
