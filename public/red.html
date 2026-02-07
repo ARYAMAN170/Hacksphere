@@ -315,7 +315,7 @@
             startTime = null;
 
             // 1. API Call
-            fetch('http://localhost:4000/simulate/flood/start', { method: 'POST' });
+            fetch('https://nondivisive-dahlia-savvily.ngrok-free.dev/simulate/flood/start', { method: 'POST' });
 
             // 2. UI Transition
             document.getElementById('wrapper-launch').classList.add('hidden');
@@ -337,7 +337,7 @@
             startTime = null;
 
             // 1. API Call
-            fetch('http://localhost:4000/simulate/flood/stop', { method: 'POST' }); // Ensure you have this endpoint!
+            fetch('https://nondivisive-dahlia-savvily.ngrok-free.dev/simulate/flood/stop', { method: 'POST' }); // Ensure you have this endpoint!
 
             // 2. UI Transition
             document.getElementById('wrapper-stop').classList.add('hidden');
