@@ -64,7 +64,7 @@ export const useFestSimulation = (): SimulationState => {
         }
     };
 
-    ws.onerror = (e) => {
+    ws.onerror = () => {
         // console.error("WS Error", e);
         // addLog("⚠️ Stream Error");
     };
